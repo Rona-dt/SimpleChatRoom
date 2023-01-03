@@ -155,5 +155,5 @@ class ChatroomServer():
 
 
 if __name__ == '__main__':
-    server = ChatroomServer("127.0.0.1", 3001, "chat_history.txt")
+    server = ChatroomServer("127.0.0.1", 3002, "chat_history.txt")
     server.start()

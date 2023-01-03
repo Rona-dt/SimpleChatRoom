@@ -1,10 +1,12 @@
 from socket import *
 import threading
 from tkinter import *
-import  traceback
+from tkinter import messagebox
+import os
+import sys
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 3001
+SERVER_PORT = 3002
 
 
 class ChatRoom:
@@ -90,9 +92,16 @@ class ChatRoom:
         thread_recv = threading.Thread(target=self.reader)
         thread_recv.start()
 
+    def on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.root.destroy()
+            os._exit(0)
+            # sys.exit(0)
+
     def chat_page(self, username):
         self.name = username
         self.root.deiconify()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.title("Chat Room")
         self.root.geometry("400x600")
         self.root.resizable(width=False,
