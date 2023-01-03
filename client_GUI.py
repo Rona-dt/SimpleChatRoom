@@ -4,7 +4,7 @@ from tkinter import *
 import  traceback
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 3000
+SERVER_PORT = 3001
 
 
 class ChatRoom:
@@ -31,16 +31,16 @@ class ChatRoom:
         self.login_page.configure(background="#aab8da")
 
         # Add widgets to the login page
-        self.username_label = Label(self.login_page, text="Username:", font=("Arial", 12), foreground="black",
+        self.username_label = Label(self.login_page, text="Username:", font=("Times New Roman", 12), foreground="black",
                                     background="#aab8da")
         self.username_entry = Entry(self.login_page)
-        self.password_label = Label(self.login_page, text="Password:", font=("Arial", 12), foreground="black",
+        self.password_label = Label(self.login_page, text="Password:", font=("Times New Roman", 12), foreground="black",
                                     background="#aab8da")
         self.password_entry = Entry(self.login_page, show="*")
         print(self.login_page)
-        self.signin_button = Button(self.login_page, text="Sign In", command=lambda: self.log_in("signin"),
+        self.signin_button = Button(self.login_page, text="Sign In", font=("Times New Roman", 12), command=lambda: self.log_in("signin"),
                                     activebackground="#e3a996")
-        self.signup_button = Button(self.login_page, text="Sign Up", command=lambda: self.log_in("signup"),
+        self.signup_button = Button(self.login_page, text="Sign Up", font=("Times New Roman", 12), command=lambda: self.log_in("signup"),
                                     activebackground="#e3a996")
 
         # Place the widgets on the login page
@@ -72,7 +72,7 @@ class ChatRoom:
         # Successfully sign up
         elif status == "Succeed_2" or status == "Error":
             # Show the status message
-            label = Label(self.login_page, text=message, font=("Arial", 12), foreground="white", background="#aab8da")
+            label = Label(self.login_page, text=message, font=("Times New Roman", 12), foreground="white", background="#aab8da")
             label.grid(row=3, padx=40, column=0, columnspan=3)
         else:
             raise Exception("Not defined status!", status)
@@ -103,25 +103,25 @@ class ChatRoom:
         self.labelHead = Label(self.root,
                                bg="#657f9a",
                                fg="#ffffff",
-                               text=username,
-                               font="Helvetica 13 bold",
+                               text="User: " + username,
+                               font=("Times New Roman", 12),
                                pady=5)
 
         self.labelHead.place(relwidth=1)
-        line = Label(self.root,
-                     width=450,
-                     bg="#d2e3f4")
-
-        line.place(relwidth=1,
-                   rely=0.07,
-                   relheight=0.012)
+        # line = Label(self.root,
+        #              width=450,
+        #              bg="#d2e3f4")
+        #
+        # line.place(relwidth=1,
+        #            rely=0.07,
+        #            relheight=0.012)
 
         self.textCons = Text(self.root,
                              width=20,
                              height=2,
                              bg="#adcceb",
                              fg="#000000",
-                             font="Helvetica 14",
+                             font=("Times New Roman", 12),
                              padx=5,
                              pady=5)
 
@@ -136,10 +136,10 @@ class ChatRoom:
         self.labelBottom.place(relwidth=1,
                                rely=0.825)
 
-        self.entryMsg = Entry(self.labelBottom,
+        self.entryMsg = Text(self.labelBottom,
                               bg="#ffffff",
                               fg="#000000",
-                              font="Helvetica 13")
+                              font=("Times New Roman", 12))
 
         # place the given widget
         # into the gui window
@@ -153,10 +153,10 @@ class ChatRoom:
         # create a Send Button
         buttonMsg = Button(self.labelBottom,
                            text="Send",
-                           font="Helvetica 10 bold",
+                           font=("Times New Roman", 12),
                            width=20,
                            bg="#c1d5ec",
-                           command=lambda: self.sendButton(self.entryMsg.get()))
+                           command=lambda: self.sendButton(self.entryMsg.get("1.0",'end-1c')))
 
         buttonMsg.place(relx=0.77,
                         rely=0.008,
@@ -199,7 +199,8 @@ class ChatRoom:
     def sendButton(self, msg):
         self.textCons.config(state=DISABLED)
         self.msg = msg
-        self.entryMsg.delete(0, END)
+        # self.entryMsg.delete(0, END)
+        self.entryMsg.delete('1.0', END)
         snd = threading.Thread(target=self.sendMessage)
         snd.start()
 
