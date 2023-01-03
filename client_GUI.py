@@ -4,7 +4,7 @@ from tkinter import *
 import  traceback
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 2904
+SERVER_PORT = 3000
 
 
 class ChatRoom:
@@ -23,23 +23,25 @@ class ChatRoom:
         self.root.geometry("400x300")
         self.root.resizable(width=False, height=False)
         # Set the background color and font color of the root window
-        self.root.configure(background="#002366")
+        self.root.configure(background="#aab8da")
 
         # Create a login page
         self.login_page = Frame(root)
         # Set the background color and font color of the login page
-        self.login_page.configure(background="#002366")
+        self.login_page.configure(background="#aab8da")
 
         # Add widgets to the login page
-        self.username_label = Label(self.login_page, text="Username:", font=("Arial", 12), foreground="white",
-                                    background="#002366")
+        self.username_label = Label(self.login_page, text="Username:", font=("Arial", 12), foreground="black",
+                                    background="#aab8da")
         self.username_entry = Entry(self.login_page)
-        self.password_label = Label(self.login_page, text="Password:", font=("Arial", 12), foreground="white",
-                                    background="#002366")
+        self.password_label = Label(self.login_page, text="Password:", font=("Arial", 12), foreground="black",
+                                    background="#aab8da")
         self.password_entry = Entry(self.login_page, show="*")
         print(self.login_page)
-        self.signin_button = Button(self.login_page, text="Sign In", command=lambda: self.log_in("signin"))
-        self.signup_button = Button(self.login_page, text="Sign Up", command=lambda: self.log_in("signup"))
+        self.signin_button = Button(self.login_page, text="Sign In", command=lambda: self.log_in("signin"),
+                                    activebackground="#e3a996")
+        self.signup_button = Button(self.login_page, text="Sign Up", command=lambda: self.log_in("signup"),
+                                    activebackground="#e3a996")
 
         # Place the widgets on the login page
         self.username_label.grid(row=0, column=0, padx=40, pady=40, sticky='w')
@@ -70,7 +72,7 @@ class ChatRoom:
         # Successfully sign up
         elif status == "Succeed_2" or status == "Error":
             # Show the status message
-            label = Label(self.login_page, text=message, font=("Arial", 12), foreground="white", background="#002366")
+            label = Label(self.login_page, text=message, font=("Arial", 12), foreground="white", background="#aab8da")
             label.grid(row=3, padx=40, column=0, columnspan=3)
         else:
             raise Exception("Not defined status!", status)
@@ -92,14 +94,15 @@ class ChatRoom:
         self.name = username
         self.root.deiconify()
         self.root.title("Chat Room")
+        self.root.geometry("400x600")
         self.root.resizable(width=False,
                             height=False)
         self.root.configure(width=470,
                             height=700,
-                            bg="#17202A")
+                            bg="#d2e3f4")
         self.labelHead = Label(self.root,
-                               bg="#17202A",
-                               fg="#EAECEE",
+                               bg="#657f9a",
+                               fg="#ffffff",
                                text=username,
                                font="Helvetica 13 bold",
                                pady=5)
@@ -107,7 +110,7 @@ class ChatRoom:
         self.labelHead.place(relwidth=1)
         line = Label(self.root,
                      width=450,
-                     bg="#ABB2B9")
+                     bg="#d2e3f4")
 
         line.place(relwidth=1,
                    rely=0.07,
@@ -116,8 +119,8 @@ class ChatRoom:
         self.textCons = Text(self.root,
                              width=20,
                              height=2,
-                             bg="#17202A",
-                             fg="#EAECEE",
+                             bg="#adcceb",
+                             fg="#000000",
                              font="Helvetica 14",
                              padx=5,
                              pady=5)
@@ -127,15 +130,15 @@ class ChatRoom:
                             rely=0.08)
 
         self.labelBottom = Label(self.root,
-                                 bg="#ABB2B9",
+                                 bg="#657f9a",
                                  height=80)
 
         self.labelBottom.place(relwidth=1,
                                rely=0.825)
 
         self.entryMsg = Entry(self.labelBottom,
-                              bg="#2C3E50",
-                              fg="#EAECEE",
+                              bg="#ffffff",
+                              fg="#000000",
                               font="Helvetica 13")
 
         # place the given widget
@@ -152,7 +155,7 @@ class ChatRoom:
                            text="Send",
                            font="Helvetica 10 bold",
                            width=20,
-                           bg="#ABB2B9",
+                           bg="#c1d5ec",
                            command=lambda: self.sendButton(self.entryMsg.get()))
 
         buttonMsg.place(relx=0.77,

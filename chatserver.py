@@ -40,7 +40,7 @@ class UserLis:
                 return ("Not registered", 0)
 
             if user.password != passwd:
-                return ("Incorrect password", 0)
+                return ("Incorrect username or password", 0)
 
             if user.sock != None:
                 return ("Already logged in", 0)
@@ -137,7 +137,8 @@ class ChatroomServer():
             serverSocket = socket(AF_INET, SOCK_STREAM)
             # Keep the port ready to be reused soon after close connection
             serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-            # Bind the ip address and port number to socket with socket descriptor
+            # Bind the ip address and port numb
+            # er to socket with socket descriptor
             serverSocket.bind((self.ip, self.port))
             # Listen for clients' request; the parameter controls the number of concurrent connections not accepted yet
             serverSocket.listen(5)
@@ -154,5 +155,5 @@ class ChatroomServer():
 
 
 if __name__ == '__main__':
-    server = ChatroomServer("127.0.0.1", 2904, "chat_history.txt")
+    server = ChatroomServer("127.0.0.1", 3000, "chat_history.txt")
     server.start()
