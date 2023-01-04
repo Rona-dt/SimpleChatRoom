@@ -11,6 +11,10 @@ SERVER_PORT = 3002
 
 class ChatRoom:
     def __init__(self, rt, sock):
+        self.paned_window = None
+        self.user_list = None
+        self.chat_area = None
+        self.label = None
         self.name = None
         self.msg = None
         self.labelHead = None
@@ -25,25 +29,25 @@ class ChatRoom:
         self.root.geometry("400x300")
         self.root.resizable(width=False, height=False)
         # Set the background color and font color of the root window
-        self.root.configure(background="#aab8da")
+        self.root.configure(background="#adcceb")
 
         # Create a login page
         self.login_page = Frame(root)
         # Set the background color and font color of the login page
-        self.login_page.configure(background="#aab8da")
+        self.login_page.configure(background="#adcceb")
 
         # Add widgets to the login page
         self.username_label = Label(self.login_page, text="Username:", font=("Times New Roman", 12), foreground="black",
-                                    background="#aab8da")
+                                    background="#adcceb")
         self.username_entry = Entry(self.login_page)
         self.password_label = Label(self.login_page, text="Password:", font=("Times New Roman", 12), foreground="black",
-                                    background="#aab8da")
+                                    background="#adcceb")
         self.password_entry = Entry(self.login_page, show="*")
         print(self.login_page)
         self.signin_button = Button(self.login_page, text="Sign In", font=("Times New Roman", 12), command=lambda: self.log_in("signin"),
-                                    activebackground="#e3a996")
+                                    activebackground="#adcceb")
         self.signup_button = Button(self.login_page, text="Sign Up", font=("Times New Roman", 12), command=lambda: self.log_in("signup"),
-                                    activebackground="#e3a996")
+                                    activebackground="#adcceb")
 
         # Place the widgets on the login page
         self.username_label.grid(row=0, column=0, padx=40, pady=40, sticky='w')
@@ -74,17 +78,10 @@ class ChatRoom:
         # Successfully sign up
         elif status == "Succeed_2" or status == "Error":
             # Show the status message
-            label = Label(self.login_page, text=message, font=("Times New Roman", 12), foreground="white", background="#aab8da")
+            label = Label(self.login_page, text=message, font=("Times New Roman", 12), foreground="white", background="#adcceb")
             label.grid(row=3, padx=40, column=0, columnspan=3)
         else:
             raise Exception("Not defined status!", status)
-
-        # t1 = threading.Thread(target=self.reader, args=[self.sock])
-        # t2 = threading.Thread(target=self.writer, args=[self.sock])
-        # t1.start()
-        # t2.start()
-        # t1.join()
-        # t2.join()
 
     def bridge_loginChat(self, username):
         self.login_page.destroy()
@@ -103,13 +100,38 @@ class ChatRoom:
         self.root.deiconify()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.title("Chat Room")
-        self.root.geometry("400x600")
-        self.root.resizable(width=False,
-                            height=False)
-        self.root.configure(width=470,
-                            height=700,
-                            bg="#d2e3f4")
-        self.labelHead = Label(self.root,
+        self.root.geometry("600x700")
+        # self.root.resizable(width=False,
+        #                     height=False)
+        # self.root.configure(width=470,
+        #                     height=700,
+        #                     bg="#d2e3f4")
+        # # line = Label(self.root,
+        # #              width=450,
+        # #              bg="#d2e3f4")
+        # #
+        # # line.place(relwidth=1,
+        # #            rely=0.07,
+        # #            relheight=0.012)
+
+        self.paned_window = PanedWindow(root, background="#d2e3f4")
+
+        # create a listbox for demo.
+        self.user_list = Listbox(self.paned_window,activestyle='dotbox',font='Times', background="#adcceb",
+                     height=10, width=20)
+
+        # add items
+        for i in range(0, 20):
+            self.user_list.insert(END, str(i))
+
+        # bind event
+        self.user_list.bind('<<ListboxSelect>>',
+                lambda e: self.label.config(text=str(self.user_list.curselection())))
+        self.paned_window.add(self.user_list)
+
+        self.chat_area = Frame(self.paned_window)
+
+        self.labelHead = Label(self.chat_area,
                                bg="#657f9a",
                                fg="#ffffff",
                                text="User: " + username,
@@ -117,15 +139,8 @@ class ChatRoom:
                                pady=5)
 
         self.labelHead.place(relwidth=1)
-        # line = Label(self.root,
-        #              width=450,
-        #              bg="#d2e3f4")
-        #
-        # line.place(relwidth=1,
-        #            rely=0.07,
-        #            relheight=0.012)
 
-        self.textCons = Text(self.root,
+        self.textCons = Text(self.chat_area,
                              width=20,
                              height=2,
                              bg="#adcceb",
@@ -138,7 +153,7 @@ class ChatRoom:
                             relwidth=1,
                             rely=0.08)
 
-        self.labelBottom = Label(self.root,
+        self.labelBottom = Label(self.chat_area,
                                  bg="#657f9a",
                                  height=80)
 
@@ -185,6 +200,19 @@ class ChatRoom:
         scrollbar.config(command=self.textCons.yview)
 
         self.textCons.config(state=DISABLED)
+
+        self.chat_area.grid_rowconfigure(0, weight=1)
+        self.chat_area.grid_columnconfigure(0, weight=1)
+
+        self.paned_window.add(self.chat_area, sticky=W + N + E + S, padx=2, pady=2)
+
+        self.paned_window.grid(row=0, column=0, sticky=N + S + W + E)
+
+        self.label = Label(root)
+        self.label.grid(row=1, column=0)
+
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_rowconfigure(0, weight=1)
 
     def reader(self):
         while True:
