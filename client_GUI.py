@@ -2,11 +2,11 @@ from socket import *
 import threading
 from tkinter import *
 from tkinter import messagebox
+import json
 import os
-import sys
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 3002
+SERVER_PORT = 3004
 
 
 class ChatRoom:
@@ -20,7 +20,7 @@ class ChatRoom:
         self.labelHead = None
         self.labelBottom = None
         self.entryMsg = None
-        self.textCons = None
+        self.textDisplay = None
         self.msg_2 = None
         self.sock = sock
         self.root = rt
@@ -86,8 +86,7 @@ class ChatRoom:
     def bridge_loginChat(self, username):
         self.login_page.destroy()
         self.chat_page(username)
-        thread_recv = threading.Thread(target=self.reader)
-        thread_recv.start()
+        threading.Thread(target=self.reader).start()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -140,7 +139,7 @@ class ChatRoom:
 
         self.labelHead.place(relwidth=1)
 
-        self.textCons = Text(self.chat_area,
+        self.textDisplay = Text(self.chat_area,
                              width=20,
                              height=2,
                              bg="#adcceb",
@@ -149,7 +148,7 @@ class ChatRoom:
                              padx=5,
                              pady=5)
 
-        self.textCons.place(relheight=0.745,
+        self.textDisplay.place(relheight=0.745,
                             relwidth=1,
                             rely=0.08)
 
@@ -187,19 +186,18 @@ class ChatRoom:
                         relheight=0.06,
                         relwidth=0.22)
 
-        self.textCons.config(cursor="arrow")
+        self.textDisplay.config(cursor="arrow")
 
         # create a scroll bar
-        scrollbar = Scrollbar(self.textCons)
+        scrollbar = Scrollbar(self.textDisplay)
 
-        # place the scroll bar
-        # into the gui window
+        # place the scroll bar into the gui window
         scrollbar.place(relheight=1,
                         relx=0.974)
 
-        scrollbar.config(command=self.textCons.yview)
+        scrollbar.config(command=self.textDisplay.yview)
 
-        self.textCons.config(state=DISABLED)
+        self.textDisplay.config(state=DISABLED)
 
         self.chat_area.grid_rowconfigure(0, weight=1)
         self.chat_area.grid_columnconfigure(0, weight=1)
@@ -217,16 +215,18 @@ class ChatRoom:
     def reader(self):
         while True:
             try:
-                data = self.sock.recv(4096).decode('utf-8')
+                data = self.sock.recv(1024).decode('utf-8')
                 if not data:
                     break
                 print(data)
-                self.textCons.config(state=NORMAL)
-                self.textCons.insert(END,
-                                     data + "\n\n")
-
-                self.textCons.config(state=DISABLED)
-                self.textCons.see(END)
+                message = json.loads(data)
+                if message["type"] == "user_list":
+                    threading.Thread(target=self.update_user, args=[message["data"]], daemon=True).start()
+                elif message["type"] == "message":
+                    self.textDisplay.config(state=NORMAL)
+                    self.textDisplay.insert(END, message["data"]+ "\n\n")
+                    self.textDisplay.config(state=DISABLED)
+                    self.textDisplay.see(END)
 
             except Exception as msg_5:
                 print("An error occurred!" + str(msg_5))
@@ -234,20 +234,22 @@ class ChatRoom:
                 break
 
     def sendButton(self, msg):
-        self.textCons.config(state=DISABLED)
+        self.textDisplay.config(state=DISABLED)
         self.msg = msg
         # self.entryMsg.delete(0, END)
         self.entryMsg.delete('1.0', END)
-        snd = threading.Thread(target=self.sendMessage)
-        snd.start()
+        threading.Thread(target=self.sendMessage).start()
 
     # function to send messages
     def sendMessage(self):
-        self.textCons.config(state=DISABLED)
+        self.textDisplay.config(state=DISABLED)
         while True:
             message = (f"{self.msg}")
             self.sock.send(message.encode('utf-8'))
             break
+
+    def update_user(self, user_list):
+        print(user_list)
 
 if __name__ == "__main__":
     try:

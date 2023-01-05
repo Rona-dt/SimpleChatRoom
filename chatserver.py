@@ -2,6 +2,8 @@ from socket import *
 import threading
 import traceback
 import errno
+import time
+import json
 
 
 class User:
@@ -12,8 +14,9 @@ class User:
 
 class UserLis:
     def __init__(self) -> None:
-       self.mutex = threading.Lock()
-       self.lis: list[User] = []
+        self.mutex = threading.Lock()
+        self.lis: list[User] = []
+        self.cur_name = []
     
     def add(self, user):
         with self.mutex:
@@ -53,6 +56,7 @@ class UserLis:
         with self.mutex:
             for user in self.lis:
                 if user.username == name:
+                    self.cur_name.append(name)
                     user.sock = sock
                     return
     
@@ -62,14 +66,23 @@ class UserLis:
         with self.mutex:
             for user in self.lis:
                 if user.username == name:
+                    self.cur_name.remove(name)
                     user.sock = None
                     return
-    
+
+    def update_usr(self):
+        with self.mutex:
+            for user in self.lis:
+                if user.sock != None:
+                    data = {"type": "user_list", "data": self.cur_name}
+                    user.sock.send(json.dumps(data).encode('utf-8'))
+
     def broadcast(self, msg):
         with self.mutex:
             for user in self.lis:
                 if user.sock != None:
-                    user.sock.send(msg.encode('utf-8'))
+                    data = {"type": "message", "data": msg}
+                    user.sock.send(json.dumps(data).encode('utf-8'))
 
 class ChatroomServer():
     def __init__(self, ip: str, port: int, file: str) -> None:
@@ -93,6 +106,8 @@ class ChatroomServer():
                     if status:
                         sock.send("Succeed_1:You are logged in!".encode("utf-8"))
                         self.userlis.activate(name, sock)
+                        self.userlis.update_usr()
+                        time.sleep(0.5)
                         self.userlis.broadcast(name + " entered the chatroom")
                         threading.Thread(target=self.worker, args=[sock, name], daemon=True).start()
                         return
@@ -123,9 +138,12 @@ class ChatroomServer():
                 self.userlis.broadcast(f"{name}: {data}")
 
             except error as e:
+                traceback.print_exc()
                 if e.errno != errno.EPIPE:
                     traceback.print_exc()
                 self.userlis.deactivae(name)
+                self.userlis.update_usr()
+                time.sleep(0.5)
                 self.userlis.broadcast(name + " left the chatroom")
                 sock.close()
                 return
@@ -137,8 +155,7 @@ class ChatroomServer():
             serverSocket = socket(AF_INET, SOCK_STREAM)
             # Keep the port ready to be reused soon after close connection
             serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-            # Bind the ip address and port numb
-            # er to socket with socket descriptor
+            # Bind the ip address and port number to socket with socket descriptor
             serverSocket.bind((self.ip, self.port))
             # Listen for clients' request; the parameter controls the number of concurrent connections not accepted yet
             serverSocket.listen(5)
@@ -148,12 +165,11 @@ class ChatroomServer():
                 clientSocket, clientAddr = serverSocket.accept()
                 print("Login/Signup page connections established from: ", clientAddr)
                 # daemon = True: allow main thread to exit any time without waiting other threads to exit
-                thread = threading.Thread(target=self.auth, args=[clientSocket], daemon=True)
-                thread.start()
+                threading.Thread(target=self.auth, args=[clientSocket], daemon=True).start()
         except Exception as msg_3:
             print("Connection establishment in server: " + str(msg_3))
 
 
 if __name__ == '__main__':
-    server = ChatroomServer("127.0.0.1", 3002, "chat_history.txt")
+    server = ChatroomServer("127.0.0.1", 3004, "chat_history.txt")
     server.start()
