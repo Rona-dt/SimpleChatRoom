@@ -11,6 +11,9 @@ SERVER_PORT = 3004
 
 class ChatRoom:
     def __init__(self, rt, sock):
+        self.user_area = None
+        self.user_count = None
+        self.cur_user = []
         self.paned_window = None
         self.user_list = None
         self.chat_area = None
@@ -44,9 +47,11 @@ class ChatRoom:
                                     background="#adcceb")
         self.password_entry = Entry(self.login_page, show="*")
         print(self.login_page)
-        self.signin_button = Button(self.login_page, text="Sign In", font=("Times New Roman", 12), command=lambda: self.log_in("signin"),
+        self.signin_button = Button(self.login_page, text="Sign In", font=("Times New Roman", 12),
+                                    command=lambda: self.log_in("signin"),
                                     activebackground="#adcceb")
-        self.signup_button = Button(self.login_page, text="Sign Up", font=("Times New Roman", 12), command=lambda: self.log_in("signup"),
+        self.signup_button = Button(self.login_page, text="Sign Up", font=("Times New Roman", 12),
+                                    command=lambda: self.log_in("signup"),
                                     activebackground="#adcceb")
 
         # Place the widgets on the login page
@@ -78,7 +83,8 @@ class ChatRoom:
         # Successfully sign up
         elif status == "Succeed_2" or status == "Error":
             # Show the status message
-            label = Label(self.login_page, text=message, font=("Times New Roman", 12), foreground="white", background="#adcceb")
+            label = Label(self.login_page, text=message, font=("Times New Roman", 12), foreground="white",
+                          background="#adcceb")
             label.grid(row=3, padx=40, column=0, columnspan=3)
         else:
             raise Exception("Not defined status!", status)
@@ -115,18 +121,20 @@ class ChatRoom:
 
         self.paned_window = PanedWindow(root, background="#d2e3f4")
 
-        # create a listbox for demo.
-        self.user_list = Listbox(self.paned_window,activestyle='dotbox',font='Times', background="#adcceb",
-                     height=10, width=20)
+        self.user_area = Frame(self.paned_window)
+        self.user_count = Label(self.user_area,
+                                text="Current user number: " + str(len(self.cur_user)),
+                                font=("Times New Roman", 12),
+                                width=20,
+                                height=2)
+        self.user_count.place(relwidth=1)
 
-        # add items
-        for i in range(0, 20):
-            self.user_list.insert(END, str(i))
-
-        # bind event
-        self.user_list.bind('<<ListboxSelect>>',
-                lambda e: self.label.config(text=str(self.user_list.curselection())))
-        self.paned_window.add(self.user_list)
+        self.user_list = Listbox(self.user_area,
+                                 activestyle='dotbox',
+                                 font=("Times New Roman", 12),
+                                 bg="#F0F0F0",
+                                 height=10, width=20)
+        self.user_list.place(relheight=1, relwidth=1, rely=0.08)
 
         self.chat_area = Frame(self.paned_window)
 
@@ -134,23 +142,23 @@ class ChatRoom:
                                bg="#657f9a",
                                fg="#ffffff",
                                text="User: " + username,
-                               font=("Times New Roman", 12),
-                               pady=5)
+                               font=("Times New Roman", 14),
+                               height=2)
 
         self.labelHead.place(relwidth=1)
 
         self.textDisplay = Text(self.chat_area,
-                             width=20,
-                             height=2,
-                             bg="#adcceb",
-                             fg="#000000",
-                             font=("Times New Roman", 12),
-                             padx=5,
-                             pady=5)
+                                width=20,
+                                height=2,
+                                bg="#adcceb",
+                                fg="#000000",
+                                font=("Times New Roman", 12),
+                                padx=5,
+                                pady=5)
 
         self.textDisplay.place(relheight=0.745,
-                            relwidth=1,
-                            rely=0.08)
+                               relwidth=1,
+                               rely=0.08)
 
         self.labelBottom = Label(self.chat_area,
                                  bg="#657f9a",
@@ -160,9 +168,9 @@ class ChatRoom:
                                rely=0.825)
 
         self.entryMsg = Text(self.labelBottom,
-                              bg="#ffffff",
-                              fg="#000000",
-                              font=("Times New Roman", 12))
+                             bg="#ffffff",
+                             fg="#000000",
+                             font=("Times New Roman", 12))
 
         # place the given widget
         # into the gui window
@@ -179,7 +187,7 @@ class ChatRoom:
                            font=("Times New Roman", 12),
                            width=20,
                            bg="#c1d5ec",
-                           command=lambda: self.sendButton(self.entryMsg.get("1.0",'end-1c')))
+                           command=lambda: self.sendButton(self.entryMsg.get("1.0", 'end-1c')))
 
         buttonMsg.place(relx=0.77,
                         rely=0.008,
@@ -199,15 +207,15 @@ class ChatRoom:
 
         self.textDisplay.config(state=DISABLED)
 
+        self.user_area.grid_rowconfigure(0, weight=1)
+        self.user_area.grid_columnconfigure(0, weight=1)
+
         self.chat_area.grid_rowconfigure(0, weight=1)
-        self.chat_area.grid_columnconfigure(0, weight=1)
+        self.chat_area.grid_columnconfigure(1, weight=1)
 
-        self.paned_window.add(self.chat_area, sticky=W + N + E + S, padx=2, pady=2)
-
-        self.paned_window.grid(row=0, column=0, sticky=N + S + W + E)
-
-        self.label = Label(root)
-        self.label.grid(row=1, column=0)
+        self.paned_window.add(self.user_area, sticky='nsew')
+        self.paned_window.add(self.chat_area, sticky='nsew', padx=2, pady=2)
+        self.paned_window.grid(row=0, column=0, sticky='nsew')
 
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
@@ -221,10 +229,11 @@ class ChatRoom:
                 print(data)
                 message = json.loads(data)
                 if message["type"] == "user_list":
-                    threading.Thread(target=self.update_user, args=[message["data"]], daemon=True).start()
+                    self.cur_user = message["data"]
+                    threading.Thread(target=self.update_user, args=[self.cur_user], daemon=True).start()
                 elif message["type"] == "message":
                     self.textDisplay.config(state=NORMAL)
-                    self.textDisplay.insert(END, message["data"]+ "\n\n")
+                    self.textDisplay.insert(END, message["data"] + "\n\n")
                     self.textDisplay.config(state=DISABLED)
                     self.textDisplay.see(END)
 
@@ -248,8 +257,12 @@ class ChatRoom:
             self.sock.send(message.encode('utf-8'))
             break
 
-    def update_user(self, user_list):
-        print(user_list)
+    def update_user(self, cur_name):
+        print(cur_name)
+        self.user_list.delete(0, END)
+        for name in cur_name:
+            self.user_list.insert(END, name)
+
 
 if __name__ == "__main__":
     try:
