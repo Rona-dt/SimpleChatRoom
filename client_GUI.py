@@ -10,6 +10,7 @@ SERVER_IP = "127.0.0.1"
 SERVER_PORT = 3004
 
 
+# represents a client
 class ChatRoom:
     def __init__(self, rt, sock):
         self.user_count = 0
@@ -22,16 +23,14 @@ class ChatRoom:
         self.msg_2 = None
         self.sock = sock
         self.root = rt
-        # Set the size of the root window
+        # Set the format of the root window
         self.root.title("Login Page")
         self.root.geometry("400x300")
         self.root.resizable(width=False, height=False)
-        # Set the background color and font color of the root window
         self.root.configure(background="#adcceb")
 
         # Create a login page
         self.login_page = Frame(root)
-        # Set the background color and font color of the login page
         self.login_page.configure(background="#adcceb")
 
         # Add widgets to the login page
@@ -61,6 +60,7 @@ class ChatRoom:
         self.login_page.grid()
         self.root.mainloop()
 
+    # handle the authentication communication with server
     def log_in(self, log_option):
         # Get the user's username and password entered
         username = self.username_entry.get()
@@ -84,52 +84,60 @@ class ChatRoom:
         else:
             raise Exception("Not defined status!", status)
 
+    # bridge between authentication GUI and chat page GUI
     def bridge_loginChat(self, username):
         self.login_page.destroy()
         self.chat_page(username)
         threading.Thread(target=self.reader).start()
 
+    # handle the action of quit
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.root.destroy()
             os._exit(0)
             # sys.exit(0)
 
+    # the chat page GUI
     def chat_page(self, username):
         self.name = username
+        # modify the root windows
         self.root.deiconify()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.title("Chat Room")
         self.root.geometry("600x700")
 
+        # create the window for chat page
         paned_window = PanedWindow(root, background="#d2e3f4")
 
+        # create user list area
         user_area = Frame(paned_window)
+        # create user count label
         self.user_count = Label(user_area,
                                 text="Current user number: " + str(len(self.cur_user)),
                                 font=("Times New Roman", 12),
                                 width=20,
                                 height=2)
         self.user_count.place(relwidth=1)
-
+        # create user listbox
         self.user_list_display = Listbox(user_area,
-                                 activestyle='dotbox',
-                                 font=("Times New Roman", 12),
-                                 bg="#F0F0F0",
-                                 height=10, width=20)
+                                         activestyle='dotbox',
+                                         font=("Times New Roman", 12),
+                                         bg="#F0F0F0",
+                                         height=10, width=20)
         self.user_list_display.place(relheight=1, relwidth=1, rely=0.08)
 
+        # create chat area
         chat_area = Frame(paned_window)
-
+        # create head label
         head = Label(chat_area,
-                               bg="#657f9a",
-                               fg="#ffffff",
-                               text="User: " + username,
-                               font=("Times New Roman", 14),
-                               height=2)
+                     bg="#657f9a",
+                     fg="#ffffff",
+                     text="User: " + username,
+                     font=("Times New Roman", 14),
+                     height=2)
 
         head.place(relwidth=1)
-
+        # create area to display communication message
         self.textDisplay = Text(chat_area,
                                 width=20,
                                 height=2,
@@ -138,18 +146,17 @@ class ChatRoom:
                                 font=("Times New Roman", 12),
                                 padx=5,
                                 pady=5)
-
         self.textDisplay.place(relheight=0.745,
                                relwidth=1,
                                rely=0.08)
-
+        # create bottom label
         bottom = Label(chat_area,
-                                 bg="#657f9a",
-                                 height=80)
+                       bg="#657f9a",
+                       height=80)
 
         bottom.place(relwidth=1,
-                               rely=0.825)
-
+                     rely=0.825)
+        # create message input area
         self.entryMsg = Text(bottom,
                              bg="#ffffff",
                              fg="#000000",
@@ -160,60 +167,62 @@ class ChatRoom:
                             relx=0.011)
 
         self.entryMsg.focus()
-
         # create a Send Button
         button_msg = Button(bottom,
-                           text="Send",
-                           font=("Times New Roman", 12),
-                           width=20,
-                           bg="#c1d5ec",
-                           command=lambda: self.sendButton(self.entryMsg.get("1.0", 'end-1c')))
+                            text="Send",
+                            font=("Times New Roman", 12),
+                            width=20,
+                            bg="#c1d5ec",
+                            command=lambda: self.sendButton(self.entryMsg.get("1.0", 'end-1c')))
 
         button_msg.place(relx=0.77,
-                            rely=0.008,
-                            relheight=0.06,
-                            relwidth=0.22)
+                         rely=0.008,
+                         relheight=0.06,
+                         relwidth=0.22)
 
         self.textDisplay.config(cursor="arrow")
 
-        # create a scroll bar
+        # create the scroll bar
         scrollbar = Scrollbar(self.textDisplay)
-
-        # place the scroll bar into the gui window
         scrollbar.place(relheight=1,
                         relx=0.974)
-
         scrollbar.config(command=self.textDisplay.yview)
 
         self.textDisplay.config(state=DISABLED)
 
+        # place the user area in chat window
         user_area.grid_rowconfigure(0, weight=1)
         user_area.grid_columnconfigure(0, weight=1)
-
+        # place the chat area in chat window
         chat_area.grid_rowconfigure(0, weight=1)
         chat_area.grid_columnconfigure(1, weight=1)
-
+        # display the chat window
         paned_window.add(user_area, sticky='nsew', minsize=180)
         paned_window.add(chat_area, sticky='nsew', padx=2, pady=2)
         paned_window.grid(row=0, column=0, sticky='nsew')
-
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
 
+    # create function for receiving message
     def reader(self):
         while True:
             try:
+                # receive message
                 data = self.sock.recv(1024).decode('utf-8')
                 if not data:
                     break
                 print(data)
+                # load json data
                 message = json.loads(data)
+                # datatype: user list
                 if message["type"] == "user_list":
                     self.cur_user = message["data"]
                     threading.Thread(target=self.update_user, args=[self.cur_user], daemon=True).start()
+                # datatype: normal message
                 elif message["type"] == "message":
                     self.textDisplay.config(state=NORMAL)
-                    self.textDisplay.insert(END, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) +"\n"+ message["data"] + "\n\n")
+                    self.textDisplay.insert(END, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) + "\n" + message[
+                        "data"] + "\n\n")
                     self.textDisplay.config(state=DISABLED)
                     self.textDisplay.see(END)
 
@@ -222,6 +231,7 @@ class ChatRoom:
                 self.sock.close()
                 break
 
+    # function triggered when send button clicking
     def sendButton(self, msg):
         self.textDisplay.config(state=DISABLED)
         self.msg = msg
@@ -236,6 +246,7 @@ class ChatRoom:
             self.sock.send(message.encode('utf-8'))
             break
 
+    # function to update the user list
     def update_user(self, cur_name):
         print(cur_name)
         self.user_list_display.delete(0, END)
@@ -246,6 +257,7 @@ class ChatRoom:
 
 if __name__ == "__main__":
     try:
+        # socket creation and connection
         clientSocket = socket(AF_INET, SOCK_STREAM)
         clientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         clientSocket.connect((SERVER_IP, SERVER_PORT))

@@ -6,18 +6,22 @@ import time
 import json
 
 
+# class of user
 class User:
     def __init__(self, sock, username, password):
         self.sock = sock
         self.username = username
         self.password = password
 
+
+# class of user list with related methods
 class UserLis:
     def __init__(self) -> None:
         self.mutex = threading.Lock()
         self.lis: list[User] = []
         self.cur_name = []
-    
+
+    # add user to database when signup
     def add(self, user):
         with self.mutex:
             self.lis.append(user)
@@ -29,7 +33,8 @@ class UserLis:
                 if name == u.username:
                     return u
             return None
-    
+
+    # remove user from the database when cancellation
     def rm(self, name):
         with self.mutex:
             user = self.find(name)
@@ -50,7 +55,7 @@ class UserLis:
 
             return ("Successfully logged in", 1)
     
-    # set the user status to actiave (online)
+    # set the user status to activate (online)
     def activate(self, name, sock):
         print(f'User {name} entered the chatroom')
         with self.mutex:
@@ -60,8 +65,8 @@ class UserLis:
                     user.sock = sock
                     return
     
-    # set the user status to inactiave (offline)
-    def deactivae(self, name):
+    # set the user status to deactivate (offline)
+    def deactivate(self, name):
         print(f'User {name} left the chatroom')
         with self.mutex:
             for user in self.lis:
@@ -70,6 +75,7 @@ class UserLis:
                     user.sock = None
                     return
 
+    # update user list when user activate or deactivate
     def update_usr(self):
         with self.mutex:
             for user in self.lis:
@@ -77,6 +83,7 @@ class UserLis:
                     data = {"type": "user_list", "data": self.cur_name}
                     user.sock.send(json.dumps(data).encode('utf-8'))
 
+    # broadcast message to all the active user
     def broadcast(self, msg):
         with self.mutex:
             for user in self.lis:
@@ -84,6 +91,7 @@ class UserLis:
                     data = {"type": "message", "data": msg}
                     user.sock.send(json.dumps(data).encode('utf-8'))
 
+# class of chat room server
 class ChatroomServer():
     def __init__(self, ip: str, port: int, file: str) -> None:
         self.ip = ip
@@ -91,15 +99,17 @@ class ChatroomServer():
         self.file = file
         self.userlis = UserLis()
 
+    # function of authentication process
     def auth(self, sock):
         while True:
             try:
+                # receive data from client
                 data = sock.recv(4096).decode("utf-8")
                 if not data:
                     return
-
                 option, name, passwd = data.strip().split("+")
 
+                # sign in situation
                 if option == "signin":
                     print("signin")
                     msg, status = self.userlis.match(name, passwd)
@@ -109,10 +119,11 @@ class ChatroomServer():
                         self.userlis.update_usr()
                         time.sleep(0.5)
                         self.userlis.broadcast(name + " entered the chatroom")
-                        threading.Thread(target=self.worker, args=[sock, name], daemon=True).start()
+                        threading.Thread(target=self.handle_msg, args=[sock, name], daemon=True).start()
                         return
                     sock.send(('Error:' + msg).encode('utf-8'))
 
+                # sign up situation
                 elif option == "signup":
                     print("signup")
                     if self.userlis.find(name) != None:
@@ -126,14 +137,15 @@ class ChatroomServer():
                 traceback.print_exc()
                 sock.close()
 
-    def worker(self, sock, name):
+    # function to handle message(send and receive)
+    def handle_msg(self, sock, name):
         while True:
             try:
                 print("data waiting")
                 data = sock.recv(4096).decode("utf-8")
                 print(data)
                 if not data:
-                    self.userlis.deactivae(name)
+                    self.userlis.deactivate(name)
                     return
                 self.userlis.broadcast(f"{name}: {data}")
 
@@ -141,14 +153,14 @@ class ChatroomServer():
                 traceback.print_exc()
                 if e.errno != errno.EPIPE:
                     traceback.print_exc()
-                self.userlis.deactivae(name)
+                self.userlis.deactivate(name)
                 self.userlis.update_usr()
                 time.sleep(0.5)
                 self.userlis.broadcast(name + " left the chatroom")
                 sock.close()
                 return
 
-    
+    # socket creation and connection
     def start(self):
         try:
             # Creat a server socket
