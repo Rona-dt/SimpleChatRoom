@@ -2,6 +2,7 @@ from socket import *
 import threading
 from tkinter import *
 from tkinter import messagebox
+import time
 import json
 import os
 
@@ -11,17 +12,11 @@ SERVER_PORT = 3004
 
 class ChatRoom:
     def __init__(self, rt, sock):
-        self.user_area = None
-        self.user_count = None
+        self.user_count = 0
         self.cur_user = []
-        self.paned_window = None
-        self.user_list = None
-        self.chat_area = None
-        self.label = None
+        self.user_list_display = None
         self.name = None
         self.msg = None
-        self.labelHead = None
-        self.labelBottom = None
         self.entryMsg = None
         self.textDisplay = None
         self.msg_2 = None
@@ -106,48 +101,36 @@ class ChatRoom:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.title("Chat Room")
         self.root.geometry("600x700")
-        # self.root.resizable(width=False,
-        #                     height=False)
-        # self.root.configure(width=470,
-        #                     height=700,
-        #                     bg="#d2e3f4")
-        # # line = Label(self.root,
-        # #              width=450,
-        # #              bg="#d2e3f4")
-        # #
-        # # line.place(relwidth=1,
-        # #            rely=0.07,
-        # #            relheight=0.012)
 
-        self.paned_window = PanedWindow(root, background="#d2e3f4")
+        paned_window = PanedWindow(root, background="#d2e3f4")
 
-        self.user_area = Frame(self.paned_window)
-        self.user_count = Label(self.user_area,
+        user_area = Frame(paned_window)
+        self.user_count = Label(user_area,
                                 text="Current user number: " + str(len(self.cur_user)),
                                 font=("Times New Roman", 12),
                                 width=20,
                                 height=2)
         self.user_count.place(relwidth=1)
 
-        self.user_list = Listbox(self.user_area,
+        self.user_list_display = Listbox(user_area,
                                  activestyle='dotbox',
                                  font=("Times New Roman", 12),
                                  bg="#F0F0F0",
                                  height=10, width=20)
-        self.user_list.place(relheight=1, relwidth=1, rely=0.08)
+        self.user_list_display.place(relheight=1, relwidth=1, rely=0.08)
 
-        self.chat_area = Frame(self.paned_window)
+        chat_area = Frame(paned_window)
 
-        self.labelHead = Label(self.chat_area,
+        head = Label(chat_area,
                                bg="#657f9a",
                                fg="#ffffff",
                                text="User: " + username,
                                font=("Times New Roman", 14),
                                height=2)
 
-        self.labelHead.place(relwidth=1)
+        head.place(relwidth=1)
 
-        self.textDisplay = Text(self.chat_area,
+        self.textDisplay = Text(chat_area,
                                 width=20,
                                 height=2,
                                 bg="#adcceb",
@@ -160,20 +143,17 @@ class ChatRoom:
                                relwidth=1,
                                rely=0.08)
 
-        self.labelBottom = Label(self.chat_area,
+        bottom = Label(chat_area,
                                  bg="#657f9a",
                                  height=80)
 
-        self.labelBottom.place(relwidth=1,
+        bottom.place(relwidth=1,
                                rely=0.825)
 
-        self.entryMsg = Text(self.labelBottom,
+        self.entryMsg = Text(bottom,
                              bg="#ffffff",
                              fg="#000000",
                              font=("Times New Roman", 12))
-
-        # place the given widget
-        # into the gui window
         self.entryMsg.place(relwidth=0.74,
                             relheight=0.06,
                             rely=0.008,
@@ -182,17 +162,17 @@ class ChatRoom:
         self.entryMsg.focus()
 
         # create a Send Button
-        buttonMsg = Button(self.labelBottom,
+        button_msg = Button(bottom,
                            text="Send",
                            font=("Times New Roman", 12),
                            width=20,
                            bg="#c1d5ec",
                            command=lambda: self.sendButton(self.entryMsg.get("1.0", 'end-1c')))
 
-        buttonMsg.place(relx=0.77,
-                        rely=0.008,
-                        relheight=0.06,
-                        relwidth=0.22)
+        button_msg.place(relx=0.77,
+                            rely=0.008,
+                            relheight=0.06,
+                            relwidth=0.22)
 
         self.textDisplay.config(cursor="arrow")
 
@@ -207,15 +187,15 @@ class ChatRoom:
 
         self.textDisplay.config(state=DISABLED)
 
-        self.user_area.grid_rowconfigure(0, weight=1)
-        self.user_area.grid_columnconfigure(0, weight=1)
+        user_area.grid_rowconfigure(0, weight=1)
+        user_area.grid_columnconfigure(0, weight=1)
 
-        self.chat_area.grid_rowconfigure(0, weight=1)
-        self.chat_area.grid_columnconfigure(1, weight=1)
+        chat_area.grid_rowconfigure(0, weight=1)
+        chat_area.grid_columnconfigure(1, weight=1)
 
-        self.paned_window.add(self.user_area, sticky='nsew')
-        self.paned_window.add(self.chat_area, sticky='nsew', padx=2, pady=2)
-        self.paned_window.grid(row=0, column=0, sticky='nsew')
+        paned_window.add(user_area, sticky='nsew', minsize=180)
+        paned_window.add(chat_area, sticky='nsew', padx=2, pady=2)
+        paned_window.grid(row=0, column=0, sticky='nsew')
 
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
@@ -233,7 +213,7 @@ class ChatRoom:
                     threading.Thread(target=self.update_user, args=[self.cur_user], daemon=True).start()
                 elif message["type"] == "message":
                     self.textDisplay.config(state=NORMAL)
-                    self.textDisplay.insert(END, message["data"] + "\n\n")
+                    self.textDisplay.insert(END, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) +"\n"+ message["data"] + "\n\n")
                     self.textDisplay.config(state=DISABLED)
                     self.textDisplay.see(END)
 
@@ -245,7 +225,6 @@ class ChatRoom:
     def sendButton(self, msg):
         self.textDisplay.config(state=DISABLED)
         self.msg = msg
-        # self.entryMsg.delete(0, END)
         self.entryMsg.delete('1.0', END)
         threading.Thread(target=self.sendMessage).start()
 
@@ -259,9 +238,10 @@ class ChatRoom:
 
     def update_user(self, cur_name):
         print(cur_name)
-        self.user_list.delete(0, END)
+        self.user_list_display.delete(0, END)
         for name in cur_name:
-            self.user_list.insert(END, name)
+            self.user_list_display.insert(END, name)
+        self.user_count['text'] = str("Current user number: " + str(len(self.cur_user)))
 
 
 if __name__ == "__main__":
