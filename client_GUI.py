@@ -108,9 +108,11 @@ class ChatRoom:
 
         # create the window for chat page
         paned_window = PanedWindow(root, background="#d2e3f4")
-
         # create user list area
         user_area = Frame(paned_window)
+        # create chat area
+        chat_area = Frame(paned_window)
+
         # create user count label
         self.user_count = Label(user_area,
                                 text="Current user number: " + str(len(self.cur_user)),
@@ -126,8 +128,6 @@ class ChatRoom:
                                          height=10, width=20)
         self.user_list_display.place(relheight=1, relwidth=1, rely=0.08)
 
-        # create chat area
-        chat_area = Frame(paned_window)
         # create head label
         head = Label(chat_area,
                      bg="#657f9a",
